@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>PREMIUM 3D EMOJI MICROWAVE EXPERIMENT</title>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+	<style>
+		@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap');
+		
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			overflow: hidden;
+			background: radial-gradient(circle at center, #0c0d1a 0%, #030308 100%);
+			font-family: 'Orbitron', system-ui, sans-serif;
+			user-select: none;
+		}
+		
+		#ui {
+			position: absolute;
+			top: 30px;
+			left: 30px;
+			z-index: 100;
+		}
+		
+		.panel {
+			background: rgba(12, 14, 28, 0.75);
+			backdrop-filter: blur(16px);
+			-webkit-backdrop-filter: blur(16px);
+			padding: 24px;
+			border-radius: 20px;
+			border: 1px solid rgba(0, 255, 204, 0.25);
+			box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.1);
+			width: 340px;
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
+		}
+
+		.title-container {
+			text-align: center;
+			letter-spacing: 1px;
+		}
+		
+		.main-title {
+			font-size: 1.3rem;
+			font-weight: 900;
+			color: #ffffff;
+			text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+		}
+
+		.sub-title {
+			font-size: 0.7rem;
+			color: #00ffcc;
+			text-transform: uppercase;
+			margin-top: 4px;
+			font-weight: 700;
+			letter-spacing: 3px;
+		}
+		
+		#timer {
+			font-size: 3.2rem;
+			font-weight: 700;
+			text-align: center;
+			background: rgba(0, 0, 0, 0.4);
+			padding: 12px;
+			border-radius: 12px;
+			color: #00ffcc;
+			text-shadow: 0 0 20px rgba(0, 255, 204, 0.6);
+			border: 1px solid rgba(0, 255, 204, 0.15);
+			font-variant-numeric: tabular-nums;
+		}
+		
+		#status {
+			text-align: center;
+			color: #a4b3c6;
+			font-size: 0.75rem;
+			letter-spacing: 1px;
+			text-transform: uppercase;
+			font-weight: 700;
+		}
+		
+		#emojiInput {
+			font-size: 2.2rem;
+			text-align: center;
+			background: rgba(255, 255, 255, 0.05);
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			border-radius: 12px;
+			height: 64px;
+			color: white;
+			outline: none;
+			transition: all 0.3s ease;
+		}
+
+		#emojiInput:focus {
+			border-color: #00ffcc;
+			background: rgba(0, 255, 204, 0.05);
+			box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
+		}
+		
+		button {
+			font-family: 'Orbitron', sans-serif;
+			font-weight: 700;
+			width: 100%;
+			padding: 14px;
+			border-radius: 12px;
+			border: none;
+			cursor: pointer;
+			transition: all 0.2s ease;
+			font-size: 0.85rem;
+			letter-spacing: 1px;
+		}
+
+		button:active {
+			transform: scale(0.98);
+		}
+		
+		.start {
+			background: #00ffcc;
+			color: #05050f;
+			box-shadow: 0 4px 20px rgba(0, 255, 204, 0.3);
+			font-size: 0.95rem;
+		}
+
+		.start:hover {
+			background: #26ffee;
+			box-shadow: 0 4px 25px rgba(0, 255, 204, 0.5);
+		}
+		
+		#stopBtn {
+			background: rgba(255, 68, 102, 0.15);
+			color: #ff4466;
+			border: 1px solid rgba(255, 68, 102, 0.3);
+		}
+
+		#stopBtn:hover {
+			background: rgba(255, 68, 102, 0.25);
+			box-shadow: 0 4px 15px rgba(255, 68, 102, 0.2);
+		}
+
+		.btn-group {
+			display: flex;
+			gap: 12px;
+		}
+
+		.secondary-btn {
+			background: rgba(255, 255, 255, 0.06);
+			color: #e2e8f0;
+			border: 1px solid rgba(255, 255, 255, 0.08);
+		}
+
+		.secondary-btn:hover {
+			background: rgba(255, 255, 255, 0.12);
+			border-color: rgba(255, 255, 255, 0.2);
+		}
+	</style>
+</head>
+<body>
+	<div id="ui">
+		<div class="panel">
+			<div class="title-container">
+				<div class="main-title">WAVE-CRAFT 3000</div>
+				<div class="sub-title">3D Emoji Microwave</div>
+			</div>
+			
+			<div id="timer">01:00</div>
+			<div id="status">Ready to Cook</div>
+			
+			<input id="emojiInput" type="text" value="🍔" maxlength="4">
+			
+			<button class="start" id="startBtn">START COOKING</button>
+			<button id="stopBtn">PAUSE SYSTEM</button>
+			
+			<div class="btn-group">
+				<button class="secondary-btn" id="add30">+30 Sec</button>
+				<button class="secondary-btn" id="randomBtn">Randomize</button>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		// Setup Scene, Camera & Premium Renderer
+		const scene = new THREE.Scene();
+		scene.fog = new THREE.FogExp2(0x0c0d1a, 0.0025);
+		
+		const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+		camera.position.set(0, 110, 260);
+		
+		const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+		renderer.setSize(window.innerWidth, window.innerHeight);
+		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+		renderer.shadowMap.enabled = true;
+		renderer.toneMapping = THREE.ACESFilmicToneMapping;
+		renderer.toneMappingExposure = 1.2;
+		document.body.appendChild(renderer.domElement);
+		
+		// Studio Lighting Array
+		scene.add(new THREE.AmbientLight(0x223344, 0.6));
+		
+		const keyLight = new THREE.DirectionalLight(0xffffff, 1.5);
+		keyLight.position.set(150, 200, 100);
+		scene.add(keyLight);
+
+		const rimLight = new THREE.DirectionalLight(0x00ffcc, 1.0);
+		rimLight.position.set(-150, 100, -100);
+		scene.add(rimLight);
+
+		// Dynamic Cooking Chamber Glow (Interior bulb effect)
+		const interiorLight = new THREE.PointLight(0xffaa00, 0, 250);
+		interiorLight.position.set(0, 20, 0);
+		scene.add(interiorLight);
+		
+		// Outer Base Platform Grid
+		const grid = new THREE.GridHelper(400, 40, 0x00ffcc, 0x16192b);
+		grid.position.y = -60;
+		scene.add(grid);
+
+		// Transparent Glass Microwave Chassis
+		const bodyWidth = 180, bodyHeight = 140, bodyDepth = 160;
+		const bodyMat = new THREE.MeshPhysicalMaterial({ 
+			color: 0x111625, 
+			transparent: true, 
+			opacity: 0.35,
+			roughness: 0.1,
+			metalness: 0.1,
+			transmission: 0.75,
+			ior: 1.5,
+			side: THREE.DoubleSide
+		});
+		const body = new THREE.Mesh(new THREE.BoxGeometry(bodyWidth, bodyHeight, bodyDepth), bodyMat);
+		body.position.y = 10;
+		scene.add(body);
+		
+		// Frame Edge Outlines to give structure
+		const wireframeGeom = new THREE.EdgesGeometry(body.geometry);
+		const wireframeMat = new THREE.LineBasicMaterial({ color: 0x00ffcc, transparent: true, opacity: 0.3 });
+		const wireframe = new THREE.LineSegments(wireframeGeom, wireframeMat);
+		body.add(wireframe);
+
+		// Front Door Frame Assembly
+		const door = new THREE.Mesh(
+			new THREE.BoxGeometry(170, 130, 8),
+			new THREE.MeshPhysicalMaterial({ 
+				color: 0x00ffcc, 
+				transparent: true, 
+				opacity: 0.15,
+				roughness: 0.2,
+				metalness: 0.8
+			})
+		);
+		door.position.set(0, 10, 82);
+		scene.add(door);
+		
+		// Corrected Glass Turntable Layout
+		const turntableRadius = 55;
+		const turntable = new THREE.Mesh(
+			new THREE.CylinderGeometry(turntableRadius, turntableRadius, 6, 64),
+			new THREE.MeshPhysicalMaterial({ 
+				color: 0xffffff, 
+				roughness: 0.1,
+				metalness: 0.1,
+				transparent: true,
+				opacity: 0.6,
+				transmission: 0.4
+			})
+		);
+		turntable.position.y = -50; 
+		scene.add(turntable);
+		
+		// Oscilloscope Microwave Rays Implementation
+		const waveLines = [];
+		const totalWaves = 6;
+		const pointsPerWave = 40;
+		const waveColors = [0x00ffcc, 0xff0055, 0xffaa00, 0x00ff55, 0x0099ff, 0xff00ff];
+
+		for(let i = 0; i < totalWaves; i++) {
+			const lineGeom = new THREE.BufferGeometry();
+			const positions = new Float32Array(pointsPerWave * 3);
+			lineGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+			
+			const lineMat = new THREE.LineBasicMaterial({
+				color: waveColors[i % waveColors.length],
+				linewidth: 2,
+				transparent: true,
+				opacity: 0.0 // Invisible until engine runs
+			});
+			
+			const line = new THREE.Line(lineGeom, lineMat);
+			scene.add(line);
+			
+			// Custom pathing telemetry properties
+			line.userData = {
+				points: new Array(pointsPerWave).fill(0).map(() => new THREE.Vector3()),
+				velocity: new THREE.Vector3(
+					(Math.random() - 0.5) * 4,
+					(Math.random() - 0.5) * 4,
+					(Math.random() - 0.5) * 4
+				),
+				head: new THREE.Vector3(
+					(Math.random() - 0.5) * (bodyWidth - 20),
+					(Math.random() - 0.5) * (bodyHeight - 20) + 10,
+					(Math.random() - 0.5) * (bodyDepth - 20)
+				),
+				freq: 8 + Math.random() * 8,
+				amp: 6 + Math.random() * 8,
+				phaseShift: Math.random() * Math.PI
+			};
+			waveLines.push(line);
+		}
+
+		// State Logic
+		let entities = [];
+		let currentEmoji = "🍔";
+		let isRunning = false;
+		let timeLeft = 60;
+		let currentRotationY = 0;
+		
+		// Genuine 3D Extrusion using Dynamic Dual Canvas Map Generators
+		function createEmojiMesh3D(emoji) {
+			const size = 128;
+			
+			// Canvas 1: High-fidelity diffuse map textures
+			const diffuseCanvas = document.createElement('canvas');
+			diffuseCanvas.width = size; diffuseCanvas.height = size;
+			const ctxD = diffuseCanvas.getContext('2d');
+			ctxD.font = '90px Arial';
+			ctxD.textAlign = 'center';
+			ctxD.textBaseline = 'middle';
+			ctxD.fillText(emoji, size/2, size/2);
+			
+			// Canvas 2: Compute a clean grayscale thickness map (Displacement)
+			const bumpCanvas = document.createElement('canvas');
+			bumpCanvas.width = size; bumpCanvas.height = size;
+			const ctxB = bumpCanvas.getContext('2d');
+			ctxB.font = '90px Arial';
+			ctxB.textAlign = 'center';
+			ctxB.textBaseline = 'middle';
+			ctxB.fillStyle = '#000000';
+			ctxB.fillRect(0, 0, size, size);
+			
+			// Build a heavy white inner glow core for clean shape displacement dropoffs
+			ctxB.fillStyle = '#ffffff';
+			ctxB.shadowBlur = 12;
+			ctxB.shadowColor = '#ffffff';
+			ctxB.fillText(emoji, size/2, size/2);
+			
+			const diffuseTex = new THREE.CanvasTexture(diffuseCanvas);
+			const bumpTex = new THREE.CanvasTexture(bumpCanvas);
+			
+			// Double sided material stack mapping onto dense segment geometry matrix
+			const mat = new THREE.MeshPhysicalMaterial({
+				map: diffuseTex,
+				displacementMap: bumpTex,
+				displacementScale: 9.0, // Extrusion depth factor
+				displacementBias: 0.0,
+				roughness: 0.2,
+				metalness: 0.1,
+				clearcoat: 0.3,
+				side: THREE.DoubleSide
+			});
+			
+			// Generate a highly subdivided physical sheet mesh grid to sculpt the 3D surface
+			const geom = new THREE.PlaneGeometry(28, 28, 64, 64);
+			const mesh = new THREE.Mesh(geom, mat);
+			mesh.castShadow = true;
+			mesh.receiveShadow = true;
+			
+			return mesh;
+		}
+		
+		function spawnEntities(emoji) {
+			// Wipe clean older references properly
+			entities.forEach(e => turntable.remove(e));
+			entities = [];
+			
+			const count = 10;
+			for (let i = 0; i < count; i++) {
+				const mesh3D = createEmojiMesh3D(emoji);
+				
+				const angle = (i / count) * Math.PI * 2 + (Math.random() * 0.4);
+				const radiusMultiplier = 0.35 + (Math.random() * 0.45);
+				const distance = turntableRadius * radiusMultiplier;
+				
+				mesh3D.position.set(
+					Math.cos(angle) * distance,
+					15, 
+					Math.sin(angle) * distance
+				);
+				
+				mesh3D.userData = { 
+					speed: 2.0 + Math.random() * 3.0, 
+					phase: i * 0.7,
+					baseY: 15 + Math.random() * 8,
+					rotSpeedX: (Math.random() - 0.5) * 0.02,
+					rotSpeedY: 0.02 + Math.random() * 0.03,
+					rotSpeedZ: (Math.random() - 0.5) * 0.02
+				};
+				
+				turntable.add(mesh3D);
+				entities.push(mesh3D);
+			}
+		}
+		
+		// Event Logic Links
+		const emojiInput = document.getElementById('emojiInput');
+		emojiInput.addEventListener('input', () => {
+			const value = emojiInput.value.trim();
+			if (value) {
+				currentEmoji = Array.from(value)[0];
+				spawnEntities(currentEmoji);
+			}
+		});
+		
+		document.getElementById('startBtn').addEventListener('click', () => {
+			if (timeLeft <= 0) timeLeft = 60;
+			isRunning = true;
+			document.getElementById('status').textContent = "SYSTEM COOKING...";
+			document.getElementById('status').style.color = "#ffaa00";
+		});
+		
+		document.getElementById('stopBtn').addEventListener('click', () => {
+			isRunning = false;
+			document.getElementById('status').textContent = "SYSTEM PAUSED";
+			document.getElementById('status').style.color = "#ff4466";
+		});
+		
+		document.getElementById('add30').addEventListener('click', () => {
+			timeLeft += 30;
+			const m = Math.floor(Math.max(0, timeLeft) / 60);
+			const s = Math.floor(Math.max(0, timeLeft) % 60);
+			document.getElementById('timer').textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+		});
+
+		document.getElementById('randomBtn').addEventListener('click', () => {
+			const pool = Array.from("🍔🍕🌮🍣🍦🔥💎🦄🚀💀🐙🌈🍄⚡❤️👽🎃🧨🌋🦖🔮🍕🍩🦖🥞");
+			currentEmoji = pool[Math.floor(Math.random() * pool.length)];
+			emojiInput.value = currentEmoji;
+			spawnEntities(currentEmoji);
+		});
+		
+		spawnEntities(currentEmoji);
+		
+		// Main Frame Loop Process
+		function animate() {
+			requestAnimationFrame(animate);
+			
+			const timeFactor = Date.now() * 0.001;
+			
+			if (isRunning && timeLeft > 0) {
+				currentRotationY += 0.015;
+				timeLeft -= 0.01666; 
+				
+				interiorLight.intensity = 1.8 + Math.sin(timeFactor * 12) * 0.4;
+				
+				// 3D floating and custom physics rotations mapping loops
+				entities.forEach((mesh) => {
+					mesh.position.y = mesh.userData.baseY + Math.sin(timeFactor * mesh.userData.speed + mesh.userData.phase) * 6;
+					mesh.rotation.x += mesh.userData.rotSpeedX;
+					mesh.rotation.y += mesh.userData.rotSpeedY;
+					mesh.rotation.z += mesh.userData.rotSpeedZ;
+				});
+
+				// Update and Bouncing Loop logic for Oscilloscope Lines
+				waveLines.forEach((line) => {
+					const data = line.userData;
+					line.material.opacity = 0.85 + Math.sin(timeFactor * 20) * 0.15; // High visibility
+
+					// Move line head position matrix forward
+					data.head.add(data.velocity);
+
+					// Boundary bouncing limits calculation
+					const borderX = bodyWidth/2 - 8;
+					const borderYMax = bodyHeight/2 + 10 - 8;
+					const borderYMin = -bodyHeight/2 + 10 + 8;
+					const borderZ = bodyDepth/2 - 8;
+
+					if (Math.abs(data.head.x) > borderX) { data.velocity.x *= -1; data.head.x = Math.sign(data.head.x) * borderX; }
+					if (data.head.y > borderYMax || data.head.y < borderYMin) { data.velocity.y *= -1; }
+					if (Math.abs(data.head.z) > borderZ) { data.velocity.z *= -1; data.head.z = Math.sign(data.head.z) * borderZ; }
+
+					// Shift positions history to generate trailing ray data points
+					for (let p = pointsPerWave - 1; p > 0; p--) {
+						data.points[p].copy(data.points[p - 1]);
+					}
+					
+					// Core Oscilloscope mathematical modulation wave profile formula calculation
+					const forwardOffset = new THREE.Vector3().copy(data.velocity).normalize();
+					const sideOffset = new THREE.Vector3(-forwardOffset.z, 0, forwardOffset.x).normalize();
+					const sineMod = Math.sin(timeFactor * data.freq + data.phaseShift) * data.amp;
+					
+					data.points[0].copy(data.head).addScaledVector(sideOffset, sineMod);
+
+					// Refresh GPU attributes maps safely
+					const posAttr = line.geometry.attributes.position;
+					for (let p = 0; p < pointsPerWave; p++) {
+						posAttr.setXYZ(p, data.points[p].x, data.points[p].y, data.points[p].z);
+					}
+					posAttr.needsUpdate = true;
+				});
+
+			} else {
+				interiorLight.intensity = Math.max(0, interiorLight.intensity - 0.08);
+				
+				// Turn off and clear tracking rays opacity levels
+				waveLines.forEach(line => {
+					line.material.opacity = Math.max(0, line.material.opacity - 0.05);
+				});
+
+				if (timeLeft <= 0 && isRunning) {
+					isRunning = false;
+					document.getElementById('status').textContent = "FINISHED";
+					document.getElementById('status').style.color = "#00ffcc";
+				}
+			}
+			
+			turntable.rotation.y = currentRotationY;
+			
+			camera.position.x = Math.sin(timeFactor * 0.12) * 130;
+			camera.position.z = Math.cos(timeFactor * 0.12) * 70 + 230;
+			camera.lookAt(0, 5, 0);
+			
+			renderer.render(scene, camera);
+			
+			const min = Math.floor(Math.max(0, timeLeft) / 60);
+			const sec = Math.floor(Math.max(0, timeLeft) % 60);
+			document.getElementById('timer').textContent = `${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+		}
+		
+		window.addEventListener('resize', () => {
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
+			renderer.setSize(window.innerWidth, window.innerHeight);
+		});
+		
+		animate();
+	</script>
+</body>
+</html>
